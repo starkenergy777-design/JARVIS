@@ -1,0 +1,6 @@
+{
+  "name": "Agent Pro v136.1",
+  "description": "Lasha Kvitsiani's Production — AI autonomous single-file web app generator with smart AI provider auto-detection (Gemini, OpenAI, Groq without requiring manual URLs), periodic 60s auto-save backup slot, sandbox testing, iterative auditing, and multi-model support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

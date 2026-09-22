@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#030712">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agent Pro">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Lasha Kvitsiani's Production — Agent Pro</title>
+<link rel="manifest" id="manifest-link">
+<script>
+window.onerror=function(m,u,l){
+  try{console.error('[watchdog] '+m+' @ '+(l||'?'))}catch(e){}
+  var d=document.getElementById('jserr');
+  if(d){d.style.display='block';d.textContent='❌ JS შეცდომა: '+m+' (ხაზი '+(l||'?')+').'}
+  return false;
+};
+</script>
+<style>
+:root{
+  --bg:#030712;--panel:#0f172a;--panel2:#1e293b;--border:#334155;
+  --text:#f8fafc;--muted:#94a3b8;--dim:#64748b;
+  --blue:#3b82f6;--green:#22c55e;--yellow:#eab308;--red:#ef4444;
+  --purple:#a855f7;--radius:8px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:10px;display:flex;flex-direction:column;gap:8px;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit}
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:8px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+h1{font-size:.95rem;font-weight:600;color:#60a5fa;letter-spacing:-.01em}
+.ver-tag{background:rgba(59,130,246,0.15);color:#93c5fd;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:6px;border:1px solid rgba(59,130,246,0.3)}
+.hbtns{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.btn{
+  background:transparent;border:1px solid var(--border);color:var(--text);
+  padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.75rem;
+  transition:all .15s;white-space:nowrap;display:inline-block;
+  user-select:none;-webkit-user-select:none;
+}
+.btn:hover{border-color:var(--blue);background:rgba(59,130,246,.1)}
+.btn:active{transform:scale(.97)}
+.btn.ok{background:#15803d;border-color:#15803d;color:#fff}
+.btn.ok:hover{background:#16a34a}
+.btn.pwa{background:var(--purple);border-color:var(--purple);color:#fff;animation:glow 2s ease-in-out infinite}
+.btn.pwa:hover{background:#9333ea}
+.btn.copy-final{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.copy-final:hover{background:#2563eb}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+#setbox{
+  position:absolute;width:1px;height:1px;opacity:0;
+  margin:-1px;padding:0;border:0;
+  clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;
+}
+#setbox:checked ~ #modal{display:flex}
+
+.btn:focus-visible,.act:focus-visible,.cbtn:focus-visible,
+.mx:focus-visible,label[tabindex]:focus-visible{
+  outline:2px solid var(--blue);outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+#jserr{
+  display:none;background:#7f1d1d;color:#fff;border:1px solid #dc2626;
+  border-radius:6px;padding:8px 10px;font-size:.75rem;flex-shrink:0;
+  white-space:pre-wrap;
+}
+.info{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.78rem;color:var(--muted);gap:8px;flex-shrink:0;
+}
+#status{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#timer{font-weight:700;color:#60a5fa;font-variant-numeric:tabular-nums}
+#size{color:var(--dim);font-size:.72rem}
+#prog{height:5px;background:var(--panel2);border-radius:3px;overflow:hidden;display:none;flex-shrink:0}
+#bar{
+  height:100%;width:0%;border-radius:3px;
+  background:linear-gradient(90deg,var(--green),#4ade80);
+  transition:width .4s cubic-bezier(.4,0,.2,1);
+}
+.ctrls{display:flex;gap:5px;flex-shrink:0}
+.cbtn{
+  flex:1;padding:7px;border:none;border-radius:6px;font-weight:700;
+  cursor:pointer;color:#fff;font-size:.82rem;display:none;transition:opacity .15s;
+}
+.cbtn:hover{opacity:.85}.cbtn:active{transform:scale(.98)}
+#pauseB{background:var(--yellow);color:#111827}#resumeB{background:var(--blue)}#stopB{background:var(--red)}
+.ws{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+#out{
+  flex:1;border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px;overflow-y:auto;background:var(--panel);
+  font-family:var(--mono);font-size:.8rem;line-height:1.55;
+  white-space:pre-wrap;overflow-wrap:break-word;tab-size:4;scroll-behavior:smooth;
+}
+#out::-webkit-scrollbar{width:6px}
+#out::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+#out::-webkit-scrollbar-thumb:hover{background:var(--dim)}
+#prev{flex:1;border:1px solid var(--border);border-radius:var(--radius);background:#fff;display:none;overflow:hidden}
+#frame{width:100%;height:100%;border:none}
+.inp{display:flex;gap:6px;flex-shrink:0}
+#idea{
+  flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;color:#fff;resize:none;height:42px;max-height:140px;
+  font-size:13px;font-family:inherit;line-height:1.4;transition:border-color .15s;
+}
+#idea:focus{border-color:var(--blue);outline:none}
+.act{
+  padding:0 16px;background:var(--green);color:#fff;border:none;
+  border-radius:6px;cursor:pointer;font-weight:700;font-size:.88rem;
+  transition:all .15s;flex-shrink:0;
+}
+.act:hover{background:#16a34a}.act:active{transform:scale(.97)}
+.act[disabled]{background:var(--panel2);color:var(--dim);cursor:not-allowed}
+#modal{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.85);
+  justify-content:center;align-items:center;z-index:1000;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.mbg{position:absolute;top:0;left:0;right:0;bottom:0;display:block;cursor:default}
+.mbox{
+  position:relative;background:var(--panel);border:1px solid var(--border);
+  padding:20px;border-radius:12px;width:92%;max-width:440px;max-height:92vh;
+  overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+}
+.mbox::-webkit-scrollbar{width:5px}
+.mbox::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.mhdr{display:flex;justify-content:space-between;align-items:center}
+.mhdr h2{font-size:1rem;color:#60a5fa;font-weight:600}
+.mx{
+  background:none;border:none;color:var(--muted);font-size:1.6rem;
+  cursor:pointer;line-height:1;padding:0 4px;transition:color .15s;
+  user-select:none;-webkit-user-select:none;display:inline-block;
+}
+.mx:hover{color:#fff}
+.mbox label:not(.mx){font-size:.8rem;font-weight:600;color:#60a5fa}
+.mbox input,.mbox textarea,.mbox select{
+  padding:8px;background:var(--bg);border:1px solid var(--border);
+  color:#fff;border-radius:6px;font-size:13px;font-family:inherit;
+  transition:border-color .15s;width:100%;
+}
+.mbox input:focus,.mbox textarea:focus,.mbox select:focus{border-color:var(--blue);outline:none}
+.mbox select option{background:var(--panel);color:var(--text)}
+.mbtns{display:flex;gap:6px;margin-top:4px}
+.mbtns button{flex:1;padding:10px}
+.hint{font-size:.7rem;color:var(--dim);margin-top:-4px}
+#iosGuide{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:var(--panel);border-top:2px solid var(--purple);
+  padding:16px;z-index:1001;animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#iosGuide h3{color:var(--purple);font-size:.95rem;margin-bottom:8px}
+#iosGuide .steps{list-style:none;padding:0}
+#iosGuide .steps li{padding:4px 0;font-size:.82rem;color:var(--text)}
+#iosGuide .steps li::before{content:'→ ';color:var(--purple);font-weight:bold}
+#iosGuide .close-ios{
+  margin-top:10px;width:100%;padding:8px;background:var(--purple);
+  border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;
+}
+#finalBanner{
+  display:none;background:linear-gradient(135deg,#1e3a5f,#0f172a);
+  border:1px solid var(--blue);border-radius:8px;padding:12px;
+  margin-bottom:8px;flex-shrink:0;
+}
+#finalBanner .fb-title{color:#60a5fa;font-size:.85rem;font-weight:600;margin-bottom:8px}
+#finalBanner .fb-btns{display:flex;gap:6px;flex-wrap:wrap}
+#finalBanner .fb-btns .btn{flex:1;min-width:100px;text-align:center}
+@keyframes glow{0%,100%{box-shadow:0 0 4px rgba(168,85,247,.3)}50%{box-shadow:0 0 12px rgba(168,85,247,.6)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulsing{animation:pulse 1.5s ease-in-out infinite}
+@media(max-width:480px){
+  body{padding:8px;gap:6px}
+  h1{font-size:.85rem}
+  .btn{padding:4px 8px;font-size:.7rem}
+  #out{font-size:.75rem;padding:8px}
+}
+</style>
+</head>
+<body>
+
+<input type="checkbox" id="setbox" autocomplete="off" aria-label="Settings toggle">
+
+<noscript>
+<div style="background:#7f1d1d;color:#fff;border-radius:6px;padding:10px;font-size:13px;margin-bottom:8px">
+⚠️ <b>JavaScript გამორთულია!</b> Settings იხსნება (CSS), მაგრამ შენახვა/გენერაცია ვერ იმუშავებს.
+</div>
+</noscript>
+
+<div id="jserr"></div>
+
+<header>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="/icon.png" alt="Agent Pro Icon" style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(6,182,212,0.4);box-shadow:0 0 10px rgba(6,182,212,0.25);object-fit:cover;" onerror="this.style.display='none'">
+    <h1>Lasha Kvitsiani's Production <span class="ver-tag">Agent Pro</span></h1>
+  </div>
+  <div class="hbtns">
+    <button class="btn pwa" id="installB" data-act="install" style="display:none" aria-label="Install App">📲 Install</button>
+    <button class="btn ok" id="dlB" data-act="dl" style="display:none" aria-label="Download">📥 Download</button>
+    <button class="btn" id="cpB" data-act="copy" style="display:none" aria-label="Copy">📋 Copy</button>
+    <button class="btn" id="tabB" data-act="prev" style="display:none" aria-label="Preview">👁️ Preview</button>
+    <button class="btn" data-act="clear" aria-label="Clear">🗑️ Clear</button>
+    <button class="btn" data-act="settings" aria-label="Settings">⚙️ Settings</button>
+    <button class="btn" id="langB" data-act="toggle-lang" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);font-weight:bold" title="Switch Language / ენის გადართვა">🇬🇪 KA</button>
+  </div>
+</header>
+
+<div id="autosaveBanner" style="display:none;background:linear-gradient(135deg,#451a03,#291003);border:1px solid #d97706;border-radius:8px;padding:10px 14px;margin-bottom:8px;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#fef3c7;">
+  <span id="autosaveBannerInfo">🛡️ აღმოჩენილია ავტო-შენახული სარეზერვო ასლი (Auto-Save slot)</span>
+  <div style="display:flex;gap:6px">
+    <button class="btn" style="background:#d97706;color:#fff;border-color:#b45309" onclick="restoreAutoSaveSlot()">აღდგენა (Restore)</button>
+    <button class="btn" onclick="dismissAutoSaveBanner()">გაუქმება</button>
+  </div>
+</div>
+
+<div id="finalBanner">
+  <div class="fb-title">✅ აპლიკაცია მზადაა! აირჩიეთ მოქმედება:</div>
+  <div class="fb-btns">
+    <button class="btn copy-final" data-act="copy-final">📋 კოდის კოპირება</button>
+    <button class="btn ok" data-act="dl">📥 ფაილის ჩამოტვირთვა</button>
+    <button class="btn" data-act="prev">👁️ Preview</button>
+    <button class="btn" data-act="share" id="shareB" style="display:none">📤 გაზიარება</button>
+  </div>
+</div>
+
+<div class="info">
+  <div id="status" aria-live="polite">მზადაა მუშაობისთვის</div>
+  <span id="autosaveTag" style="font-size:10px;color:#34d399;cursor:pointer" title="Auto-Save slot: ყოველ 60 წამში. დააჭირეთ მყისიერი შენახვისთვის" onclick="doAutoSaveSlot();alert('✅ სარეზერვო ასლი შენახულია!');">🛡️ Auto-Save <span id="autosaveStatus">(60s)</span></span>
+  <span id="size"></span>
+  <div id="timer">⏱️ 00:00</div>
+</div>
+
+<div id="prog"><div id="bar"></div></div>
+
+<div class="ctrls">
+  <button id="pauseB" class="cbtn" data-act="pause">⏸️ Pause</button>
+  <button id="resumeB" class="cbtn" data-act="resume">▶️ Resume</button>
+  <button id="stopB" class="cbtn" data-act="stop">⏹️ Stop</button>
+</div>
+
+<div class="ws">
+  <div id="out" role="log" aria-live="off"></div>
+  <div id="prev"><iframe id="frame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></div>
+</div>
+
+<div class="inp">
+  <textarea id="idea" placeholder="აღწერეთ აპლიკაციის იდეა… (Enter — Start, Shift+Enter — ახალი ხაზი)" aria-label="App idea"></textarea>
+  <button id="goB" class="act" data-act="start">Start</button>
+</div>
+
+<div id="modal" role="dialog" aria-modal="true">
+  <label class="mbg" for="setbox" aria-label="Close"></label>
+  <div class="mbox">
+    <div class="mhdr">
+      <h2>⚙️ Settings (Lasha Kvitsiani's Production)</h2>
+      <button class="mx" data-act="close-settings" aria-label="Close">×</button>
+    </div>
+    
+    <label for="apiKey">API Key / Token:</label>
+    <input type="password" id="apiKey" placeholder="შეიყვანეთ API Key (მაგ. Gemini AIzaSy..., OpenAI sk-..., Groq gsk_...)" autocomplete="off">
+    <div id="providerBadge" style="margin:4px 0 10px;padding:6px 10px;border-radius:6px;background:rgba(30,58,138,0.3);border:1px solid #3b82f6;font-size:11px;color:#93c5fd;display:none"></div>
+
+    <label for="model">Model Identifier:</label>
+    <input type="text" id="model" placeholder="მაგ. gemini-2.5-flash ან gpt-4o">
+    <div id="modelPresets" style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 10px;font-size:10px">
+      <span style="color:var(--dim);margin-right:2px">სწრაფი არჩევა:</span>
+      <button type="button" class="btn" onclick="selectModel('gemini-2.5-flash')" style="padding:2px 6px;font-size:10px">gemini-2.5-flash</button>
+      <button type="button" class="btn" onclick="selectModel('gemini-2.5-pro')" style="padding:2px 6px;font-size:10px">gemini-2.5-pro</button>
+      <button type="button" class="btn" onclick="selectModel('gemini-2.0-flash')" style="padding:2px 6px;font-size:10px">gemini-2.0-flash</button>
+      <button type="button" class="btn" onclick="selectModel('gpt-4o')" style="padding:2px 6px;font-size:10px">gpt-4o</button>
+    </div>
+
+    <label for="baseUrl">API Endpoint URL <span style="font-size:11px;color:#34d399">(სურვილისამებრ — Gemini-სთვის ავტომატურია):</span></label>
+    <input type="text" id="baseUrl" placeholder="ავტომატურია Gemini-სთვის (დატოვეთ ცარიელი)">
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <label for="cycles">ციკლების რაოდენობა:</label>
+      <button type="button" class="btn" style="padding:1px 6px;font-size:0.7rem;color:#93c5fd" data-act="toggle-unlimited">∞ უსასრულო</button>
+    </div>
+    <input type="number" id="cycles" min="0" step="1" value="5" placeholder="0 = უსასრულო, ან ნებისმიერი რიცხვი (მაგ. 5, 20, 50, 100...)">
+    <div class="hint">0 = შეუზღუდავი ციკლები (Stop-მდე). ნებისმიერი რიცხვი &gt;= 1 მუშაობს ყოველგვარი ზედა ჭერის გარეშე.</div>
+
+    <label for="fname">ფაილის სახელი (Output File):</label>
+    <input type="text" id="fname" value="app.html">
+
+    <label for="rules">დამატებითი წესები (Custom Rules):</label>
+    <textarea id="rules" rows="2" placeholder="მაგ: Tailwind CDN, მუქი თემა, responsive UI, ანიმაციები…"></textarea>
+
+    <label for="customHeaders">Custom Headers (JSON, სურვილისამებრ):</label>
+    <input type="text" id="customHeaders" placeholder='{"HTTP-Referer": "https://example.com"}' font-family="monospace">
+    
+    <div style="border:1px solid var(--border);border-radius:6px;padding:8px;background:rgba(0,0,0,0.3);margin:8px 0;font-size:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span>🛡️ <b>Auto-Save (60 წმ სლოტი):</b> <span id="autosaveModalStatus" style="color:#34d399">აქტიურია</span></span>
+        <div style="display:flex;gap:4px">
+          <button type="button" class="btn" onclick="doAutoSaveSlot();alert('✅ სარეზერვო ასლი შენახულია!');" style="font-size:10px;padding:3px 6px">Backup Now</button>
+          <button type="button" class="btn" onclick="restoreAutoSaveSlot();" style="font-size:10px;padding:3px 6px;color:#fbbf24">Restore</button>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:4px">ინახავს იდეასა და კოდს მეორეულ 'autosave' სლოტში crash-ისგან დასაცავად.</div>
+    </div>
+
+    <div class="hint">💾 პარამეტრები ინახება ლოკალურად თქვენს ბრაუზერში.</div>
+
+    <div class="mbtns">
+      <button class="act" style="background:var(--blue)" data-act="test-api">🔌 Test Connection</button>
+      <button class="act" data-act="save">💾 Save & Close</button>
+    </div>
+    <div class="mbtns" style="margin-top:8px">
+      <button class="btn" data-act="export">📤 Export</button>
+      <button class="btn" data-act="import">📥 Import</button>
+    </div>
+  </div>
+</div>
+
+<div id="iosGuide">
+  <h3>📱 აპის ინსტალაცია iPhone/iPad-ზე</h3>
+  <ol class="steps">
+    <li>დააჭირეთ Safari-ის <b>Share</b> ღილაკს (კვადრატი ისრით ↑)</li>
+    <li>აირჩიეთ <b>"Add to Home Screen"</b></li>
+    <li>დააჭირეთ <b>"Add"</b> — აპი გამოჩნდება მთავარ ეკრანზე</li>
+  </ol>
+  <button class="close-ios" data-act="close-ios">გასაგებია ✓</button>
+</div>
+
+<script>
+"use strict";
+var WIN_RE=/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+var HAS_AC=typeof AbortController!=='undefined';
+var HAS_IAT=!!(document.body&&document.body.insertAdjacentText);
+var FALLBACK_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+var manifestURL=null;
+var currentAbortCtrl=null;
+
+function $(id){return document.getElementById(id)}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function errMsg(e){return(e&&e.message)?e.message:String(e)}
+
+/* ═══════════ HELPERS ═══════════ */
+
+function sanitizeName(n){
+  n=String(n||'')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g,'')
+    .replace(/\.{2,}/g,'.')
+    .replace(/^\.+/,'')
+    .replace(/\.+$/,'')
+    .trim();
+  if(!n||WIN_RE.test(n))n='app';
+  if(!/\.html$/i.test(n))n+='.html';
+  return n;
+}
+
+function fmtSize(b){
+  if(!b||b<0||isNaN(b))return'0 B';
+  if(b<1024)return b+' B';
+  if(b<1048576)return(b/1024).toFixed(1)+' KB';
+  return(b/1048576).toFixed(1)+' MB';
+}
+
+function codeSize(s){
+  try{return new TextEncoder().encode(s||'').length}
+  catch(e){return(s||'').length}
+}
+
+function truncate(s,max){
+  if(!s)return'';
+  if(!max||max<=0)return'';
+  if(s.length<=max)return s;
+  return s.slice(0,max)+'\n\n[... truncated '+fmtSize(codeSize(s.slice(max)))+' ...]';
+}
+
+/* ═══════════ STORAGE ═══════════ */
+
+var DB={
+  get:function(k,f){try{var v=localStorage.getItem(k);return v!==null?v:f}catch(e){return f}},
+  set:function(k,v){
+    try{localStorage.setItem(k,v);return true}
+    catch(e){return false;}
+  }
+};
+
+/* ═══════════ CONFIG (NEUTRAL) ═══════════ */
+
+var C={
+  key:DB.get('ak',''),
+  url:DB.get('bu',''),
+  model:DB.get('md',''),
+  cycles:(function(){
+    var c=parseInt(DB.get('cy','5'),10);
+    return (!isNaN(c)&&c>=0)?c:5;
+  })(), // UNLIMITED: accepts 0 for unlimited, or any positive integer
+  file:sanitizeName(DB.get('fn','app.html')),
+  rules:DB.get('ru',''),
+  headers:DB.get('ch','')
+};
+
+function fill(id,v){
+  var e=$(id);
+  if(!e)return;
+  try{e.value=(v!==null&&v!==undefined)?v:''}catch(err){}
+}
+fill('apiKey',C.key);fill('baseUrl',C.url);fill('model',C.model);
+fill('cycles',C.cycles);fill('fname',C.file);fill('rules',C.rules);
+fill('customHeaders',C.headers);
+
+if($('apiKey'))$('apiKey').addEventListener('input', updateProviderUI);
+if($('model'))$('model').addEventListener('input', updateProviderUI);
+if($('baseUrl'))$('baseUrl').addEventListener('input', updateProviderUI);
+updateProviderUI();
+
+var draft=DB.get('draft','');
+if(draft&&$('idea'))$('idea').value=draft;
+
+/* ═══════════ STATE ═══════════ */
+
+var paused=false,stopped=false,running=false;
+var tmr=null,secs=0;
+var lastCode=DB.get('lc','');
+var showingPrev=false;
+var deferredPrompt=null;
+
+if(lastCode){
+  $('tabB').style.display='';
+  $('dlB').style.display='';
+  $('cpB').style.display='';
+  updSize();
+}
+
+/* ═══════════ PERIODIC 60-SEC AUTOSAVE & CRASH RECOVERY ═══════════ */
+var lastAutoSaveTime=null;
+
+function doAutoSaveSlot(){
+  try{
+    var curIdea=$('idea')?$('idea').value:'';
+    if(curIdea||lastCode){
+      var backupData={
+        idea:curIdea,
+        code:lastCode,
+        time:new Date().toISOString()
+      };
+      var s=JSON.stringify(backupData);
+      DB.set('autosave',s);
+      DB.set('agent_pro_autosave',s);
+      var d=new Date();
+      var hh=String(d.getHours()).padStart(2,'0');
+      var mm=String(d.getMinutes()).padStart(2,'0');
+      var ss=String(d.getSeconds()).padStart(2,'0');
+      lastAutoSaveTime=hh+':'+mm+':'+ss;
+      var el=$('autosaveStatus');
+      if(el)el.textContent='('+lastAutoSaveTime+')';
+      var ms=$('autosaveModalStatus');
+      if(ms)ms.textContent=lastAutoSaveTime;
+    }
+  }catch(e){}
+}
+
+setInterval(doAutoSaveSlot,60000);
+
+function checkAutoSaveRecovery(){
+  try{
+    var raw=DB.get('autosave','')||DB.get('agent_pro_autosave','');
+    if(raw){
+      var b=JSON.parse(raw);
+      var curDraft=DB.get('draft','');
+      var curCode=DB.get('lc','');
+      if(b&&(b.code||b.idea)){
+        if((b.code&&b.code.trim()!==curCode.trim())||(b.idea&&b.idea.trim()!==curDraft.trim())){
+          var bar=$('autosaveBanner');
+          if(bar){
+            var timeStr=b.time?new Date(b.time).toLocaleTimeString():'';
+            var infoEl=$('autosaveBannerInfo');
+            if(infoEl)infoEl.textContent='🛡️ აღმოჩენილია ავტო-შენახული სარეზერვო ასლი ('+timeStr+')';
+            bar.style.display='flex';
+          }
+        }
+      }
+    }
+  }catch(e){}
+}
+
+function restoreAutoSaveSlot(){
+  try{
+    var raw=DB.get('autosave','')||DB.get('agent_pro_autosave','');
+    if(!raw){alert('სარეზერვო ასლი ცარიელია.');return}
+    var b=JSON.parse(raw);
+    if(b.idea&&$('idea')){
+      $('idea').value=b.idea;
+      DB.set('draft',b.idea);
+    }
+    if(b.code){
+      lastCode=b.code;
+      DB.set('lc',b.code);
+      $('tabB').style.display='';
+      $('dlB').style.display='';
+      $('cpB').style.display='';
+      updSize();
+    }
+    log('🔄 მონაცემები წარმატებით აღდგა ავტო-შენახული სარეზერვო ასლიდან!');
+    dismissAutoSaveBanner();
+  }catch(e){
+    alert('ვერ მოხერხდა აღდგენა: '+e.message);
+  }
+}
+
+function dismissAutoSaveBanner(){
+  var bar=$('autosaveBanner');
+  if(bar)bar.style.display='none';
+}
+
+checkAutoSaveRecovery();
+
+/* ═══════════ MODAL ═══════════ */
+
+function focusModal(){
+  setTimeout(function(){
+    updateProviderUI();
+    var e=$('apiKey')||$('baseUrl');
+    if(e)e.focus();
+  },100);
+}
+
+function setModal(open){
+  var b=$('setbox');
+  if(!b)return;
+  b.checked=!!open;
+  if(open)focusModal();
+}
+
+function openSet(){setModal(true)}
+
+function closeSet(){
+  var b=$('setbox');
+  if(b)b.checked=false;
+}
+
+/* ═══════════ PWA ═══════════ */
+
+function setupPWA(){
+  var mf={
+    name:"Agent Pro — Lasha Kvitsiani's Production",
+    short_name:"Agent Pro",
+    description:"Autonomous single-file web app generator",
+    start_url:location.href,
+    display:"standalone",
+    background_color:"#030712",
+    theme_color:"#030712",
+    icons:[
+      {src:"/icon.png",sizes:"512x512",type:"image/png",purpose:"any maskable"},
+      {src:genIcon(192),sizes:"192x192",type:"image/png",purpose:"any maskable"},
+      {src:genIcon(512),sizes:"512x512",type:"image/png",purpose:"any maskable"}
+    ]
+  };
+  try{
+    if(manifestURL){try{URL.revokeObjectURL(manifestURL)}catch(e){}}
+    manifestURL=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));
+    var ml=$('manifest-link');
+    if(ml)ml.href=manifestURL;
+  }catch(e){}
+
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();
+    deferredPrompt=e;
+    $('installB').style.display='';
+    log('📲 აპის ინსტალაცია ხელმისაწვდომია!');
+  });
+
+  var ua=navigator.userAgent||'';
+  var ios=(/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))&&!window.MSStream;
+  var standalone=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;
+  if(ios&&!standalone&&!DB.get('iosShown','')){
+    setTimeout(function(){
+      var g=$('iosGuide');if(g)g.style.display='block';
+    },2000);
+  }
+  if(standalone)$('installB').style.display='none';
+  if(navigator.share)$('shareB').style.display='';
+}
+
+function genIcon(sz){
+  if(!sz||sz<=0)sz=192;
+  try{
+    var c=document.createElement('canvas');
+    c.width=sz;c.height=sz;
+    var x=c.getContext('2d');
+    if(!x)return FALLBACK_ICON;
+    var g=x.createLinearGradient(0,0,sz,sz);
+    g.addColorStop(0,'#1e3a5f');g.addColorStop(1,'#0f172a');
+    x.fillStyle=g;
+    if(typeof x.roundRect==='function'){
+      x.beginPath();x.roundRect(0,0,sz,sz,sz*0.15);x.fill();
+    }else{
+      x.fillRect(0,0,sz,sz);
+    }
+    x.fillStyle='#60a5fa';
+    var fs=Math.max(sz*0.4,10);
+    x.font='bold '+fs+'px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+    x.textAlign='center';x.textBaseline='middle';
+    x.fillText('AP',sz/2,sz/2);
+    return c.toDataURL('image/png')||FALLBACK_ICON;
+  }catch(e){
+    return FALLBACK_ICON;
+  }
+}
+
+function installApp(){
+  if(deferredPrompt){
+    try{
+      deferredPrompt.prompt();
+      if(deferredPrompt.userChoice&&deferredPrompt.userChoice.then){
+        deferredPrompt.userChoice.then(function(r){
+          if(r&&r.outcome==='accepted')log('✅ აპი ინსტალირებულია!');
+        }).catch(function(){});
+      }
+    }catch(e){}
+    deferredPrompt=null;
+    $('installB').style.display='none';
+    return;
+  }
+  var ua=navigator.userAgent||'';
+  var ios=(/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))&&!window.MSStream;
+  if(ios){
+    var g=$('iosGuide');if(g)g.style.display='block';
+    return;
+  }
+  alert('ინსტალაცია:\n• Chrome/Edge: მისამართის ზოლში დააჭირეთ Install icon\n• Safari: Share → "Add to Home Screen"');
+}
+
+function closeIosGuide(){
+  $('iosGuide').style.display='none';
+  DB.set('iosShown','1');
+}
+
+/* ═══════════ SETTINGS ═══════════ */
+
+function toggleUnlimited(){
+  var cy=$('cycles');
+  if(!cy)return;
+  var cur=parseInt(cy.value,10);
+  if(cur===0){
+    cy.value=5;
+  }else{
+    cy.value=0;
+  }
+}
+
+/* ═══════════ PROVIDER AUTO-DETECTION ═══════════ */
+
+function detectProvider(k, m, u){
+  k=(k||'').trim();
+  m=(m||'').trim().toLowerCase();
+  u=(u||'').trim().toLowerCase();
+
+  // 1. Google Gemini (by Key: AIzaSy..., or Model: gemini..., or URL: googleapis.com)
+  if(k.indexOf('AIzaSy')===0 || m.indexOf('gemini')!==-1 || u.indexOf('googleapis.com')!==-1 || u.indexOf('generativelanguage')!==-1){
+    return {
+      id:'gemini',
+      name:'Google Gemini',
+      url:'https://generativelanguage.googleapis.com/v1beta',
+      model:'gemini-2.5-flash',
+      requiresUrl:false
+    };
+  }
+
+  // 2. Groq
+  if(k.indexOf('gsk_')===0 || m.indexOf('groq')!==-1 || u.indexOf('groq.com')!==-1){
+    return {
+      id:'groq',
+      name:'Groq',
+      url:'https://api.groq.com/openai/v1',
+      model:'llama-3.3-70b-versatile',
+      requiresUrl:false
+    };
+  }
+
+  // 3. OpenRouter
+  if(k.indexOf('sk-or-v1-')===0 || (m.indexOf('/')!==-1 && !u) || u.indexOf('openrouter.ai')!==-1){
+    return {
+      id:'openrouter',
+      name:'OpenRouter',
+      url:'https://openrouter.ai/api/v1',
+      model:'google/gemini-2.5-flash',
+      requiresUrl:false
+    };
+  }
+
+  // 4. Anthropic Claude
+  if(k.indexOf('sk-ant-')===0 || m.indexOf('claude')!==-1 || u.indexOf('anthropic.com')!==-1){
+    return {
+      id:'anthropic',
+      name:'Anthropic Claude',
+      url:'https://api.anthropic.com/v1',
+      model:'claude-3-5-sonnet-20241022',
+      requiresUrl:false
+    };
+  }
+
+  // 5. DeepSeek
+  if(m.indexOf('deepseek')!==-1 || u.indexOf('deepseek.com')!==-1){
+    return {
+      id:'deepseek',
+      name:'DeepSeek',
+      url:'https://api.deepseek.com',
+      model:'deepseek-chat',
+      requiresUrl:false
+    };
+  }
+
+  // 6. OpenAI
+  if(k.indexOf('sk-proj-')===0 || k.indexOf('sk-')===0 || m.indexOf('gpt')!==-1 || m.indexOf('o1')===0 || m.indexOf('o3')===0 || u.indexOf('api.openai.com')!==-1){
+    return {
+      id:'openai',
+      name:'OpenAI',
+      url:'https://api.openai.com/v1',
+      model:'gpt-4o',
+      requiresUrl:false
+    };
+  }
+
+  if(u){
+    return {
+      id:'custom',
+      name:'Custom Endpoint',
+      url:u,
+      requiresUrl:true
+    };
+  }
+
+  return null;
+}
+
+function selectModel(m){
+  var el=$('model');
+  if(el){el.value=m;updateProviderUI();}
+}
+
+function updateProviderUI(){
+  var k = $('apiKey') ? $('apiKey').value : '';
+  var m = $('model') ? $('model').value : '';
+  var u = $('baseUrl') ? $('baseUrl').value : '';
+  var prov = detectProvider(k, m, u);
+  var badge = $('providerBadge');
+  if(!badge) return;
+  if(prov){
+    badge.style.display = 'block';
+    if(!prov.requiresUrl){
+      badge.innerHTML = '⚡ <b>'+prov.name+'</b> — URL არ არის საჭირო, კავშირი ავტომატურად დამყარდება API Key-ით და Model-ით.';
+      if(!$('baseUrl').value){
+        $('baseUrl').placeholder = 'ავტომატურია ('+prov.url+') — დატოვეთ ცარიელი';
+      }
+    } else {
+      badge.innerHTML = '🌐 <b>'+prov.name+'</b> — საჭიროებს Endpoint URL-ს.';
+    }
+  } else {
+    badge.style.display = 'none';
+    if(!$('baseUrl').value){
+      $('baseUrl').placeholder = 'https://api.example.com/v1 (ან დატოვეთ ცარიელი Gemini-სთვის)';
+    }
+  }
+}
+
+function saveSet(){
+  var u=$('baseUrl').value.trim().replace(/\/+$/,'');
+  var m=$('model').value.trim();
+  var k=$('apiKey').value.trim();
+  var prov = detectProvider(k, m, u);
+
+  if(!u && !m && !k){
+    alert('მიუთითეთ API Key, Model ან Endpoint URL!');
+    return;
+  }
+
+  if(!m && prov && prov.model){
+    m = prov.model;
+  }
+  
+  C.url=u;
+  C.model=m;
+  C.key=k;
+  
+  // UNLIMITED CYCLES: accepts 0 for unlimited, or any integer >= 1 without arbitrary cap
+  var parsedCycles=parseInt($('cycles').value,10);
+  C.cycles=(!isNaN(parsedCycles)&&parsedCycles>=0)?parsedCycles:5;
+  
+  C.file=sanitizeName($('fname').value);
+  C.rules=$('rules').value.trim();
+  C.headers=$('customHeaders') ? $('customHeaders').value.trim() : '';
+
+  DB.set('bu',C.url);DB.set('md',C.model);DB.set('ak',C.key);
+  DB.set('cy',C.cycles);DB.set('fn',C.file);DB.set('ru',C.rules);DB.set('ch',C.headers);
+  closeSet();
+  var cyTxt = C.cycles === 0 ? '∞ უსასრულო' : C.cycles;
+  var provTxt = prov ? ' (' + prov.name + ')' : '';
+  alert('✅ პარამეტრები შენახულია!' + provTxt + ' ციკლები: '+cyTxt);
+}
+
+/* ═══════════ NEUTRAL API CLIENT ═══════════ */
+
+function buildEndpoint(url, model, key, prompt){
+  var u=(url||'').trim().replace(/\/+$/,'');
+  var m=(model||'').trim();
+  var k=(key||'').trim();
+
+  var prov = detectProvider(k, m, u);
+  if(!u && prov && !prov.requiresUrl){
+    u = prov.url;
+  }
+  if(!m && prov && prov.model){
+    m = prov.model;
+  }
+
+  var ep=u;
+  var hdr={'Content-Type':'application/json'};
+  if(k) hdr['Authorization']='Bearer '+k;
+
+  if(C.headers){
+    try{
+      var parsedH=JSON.parse(C.headers);
+      if(parsedH&&typeof parsedH==='object'){
+        for(var hk in parsedH){if(parsedH.hasOwnProperty(hk))hdr[hk]=String(parsedH[hk])}
+      }
+    }catch(ex){}
+  }
+
+  var body;
+  var isGemini = (u.indexOf('googleapis.com')!==-1 || (prov && prov.id==='gemini'));
+  if(isGemini){
+    var cleanM=(m||'gemini-2.5-flash').replace(/^models\//,'');
+    var base = u || 'https://generativelanguage.googleapis.com/v1beta';
+    ep=base+'/models/'+encodeURIComponent(cleanM)+':generateContent';
+    if(k&&ep.indexOf('key=')===-1){
+      ep+='?key='+encodeURIComponent(k);
+      delete hdr['Authorization'];
+    }
+    body={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:8192}};
+  }else{
+    if(ep&&ep.indexOf('/chat/completions')===-1){
+      ep+='/chat/completions';
+    }
+    body={model:m,messages:[{role:'user',content:prompt}],temperature:0.2};
+  }
+  return {endpoint:ep,headers:hdr,body:body,provider:prov,model:m};
+}
+
+function testApiBtn(btn){
+  if(!btn)return;
+  var u=$('baseUrl').value.trim().replace(/\/+$/,'');
+  var m=$('model').value.trim();
+  var k=$('apiKey').value.trim();
+  var prov = detectProvider(k, m, u);
+
+  if(!u && (!prov || prov.requiresUrl)){
+    alert('შეიყვანეთ API Endpoint URL ან მხარდაჭერილი AI-ის API Key (მაგ. Gemini-სთვის URL ავტომატურია)!');
+    return;
+  }
+  if(!m && (!prov || !prov.model)){
+    alert('შეიყვანეთ Model Identifier (მაგ. gemini-2.5-flash)!');
+    return;
+  }
+  var old=btn.textContent;
+  btn.textContent='⏳ Testing…';btn.disabled=true;
+  var restore=function(){btn.textContent=old;btn.disabled=false};
+
+  var req=buildEndpoint(u,m,k,'Respond with: PONG');
+
+  fetch(req.endpoint,{method:'POST',headers:req.headers,body:JSON.stringify(req.body)})
+  .then(function(r){
+    return r.text().then(function(txt){
+      var j=null;
+      try{j=JSON.parse(txt)}catch(e){}
+      if(!r.ok){
+        var errMsg='Status '+r.status;
+        if(j&&j.error){
+          if(typeof j.error==='string')errMsg=j.error;
+          else if(j.error.message)errMsg=j.error.message;
+        }else if(txt){
+          errMsg=txt.slice(0,180);
+        }
+        throw new Error(errMsg);
+      }
+      var reply='';
+      if(j){
+        if(j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts){
+          reply=j.candidates[0].content.parts[0].text;
+        }else if(j.choices&&j.choices[0]&&j.choices[0].message){
+          reply=j.choices[0].message.content;
+        }else if(j.text){
+          reply=j.text;
+        }
+      }
+      var provTag = req.provider ? '['+req.provider.name+'] ' : '';
+      alert('✅ '+provTag+'API კავშირი წარმატებით დამყარდა!\nპასუხი: '+(reply?reply.trim():'PONG'));
+    });
+  })
+  .catch(function(e){
+    alert('❌ API შეცდომა:\n'+errMsg(e));
+  })
+  .then(restore);
+}
+
+function exportSettings(){
+  try{
+    var d={url:C.url,model:C.model,key:C.key,cycles:C.cycles,file:C.file,rules:C.rules,headers:C.headers,exported:new Date().toISOString()};
+    var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    var u=URL.createObjectURL(b);
+    var ts=new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    a.href=u;a.download='agent-settings-'+ts+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(u)},5000);
+    log('📤 პარამეტრები ექსპორტირებულია.');
+  }catch(e){alert('❌ ექსპორტი ვერ მოხერხდა: '+errMsg(e))}
+}
+
+function importSettings(){
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='.json,application/json';
+  inp.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(inp);
+  var done=false;
+  function rm(){if(!done){done=true;if(inp.parentNode)inp.parentNode.removeChild(inp)}}
+  inp.onchange=function(){
+    var f=inp.files&&inp.files[0];
+    if(!f){rm();return}
+    var rd=new FileReader();
+    rd.onload=function(ev){
+      try{
+        var d=JSON.parse(ev.target.result);
+        if(d&&typeof d==='object'){
+          if(typeof d.url==='string')C.url=d.url;
+          if(typeof d.model==='string')C.model=d.model;
+          if(typeof d.key==='string')C.key=d.key;
+          if(d.cycles!==undefined&&d.cycles!==null){
+            var c=parseInt(d.cycles,10);
+            C.cycles=(!isNaN(c)&&c>=0)?c:5;
+          }
+          if(d.file)C.file=sanitizeName(d.file);
+          if(typeof d.rules==='string')C.rules=d.rules;
+          if(typeof d.headers==='string')C.headers=d.headers;
+          else if(typeof d.customHeaders==='string')C.headers=d.customHeaders;
+          fill('baseUrl',C.url);fill('model',C.model);fill('apiKey',C.key);
+          fill('cycles',C.cycles);fill('fname',C.file);fill('rules',C.rules);
+          fill('customHeaders',C.headers);
+          DB.set('bu',C.url);DB.set('md',C.model);DB.set('ak',C.key);
+          DB.set('cy',C.cycles);DB.set('fn',C.file);DB.set('ru',C.rules);DB.set('ch',C.headers);
+          alert('✅ პარამეტრები იმპორტირებულია!');
+        }
+      }catch(e){alert('❌ ფაილის წაკითხვა ვერ მოხერხდა: '+errMsg(e))}
+      rm();
+    };
+    rd.onerror=function(){alert('❌ წაკითხვის შეცდომა.');rm()};
+    rd.readAsText(f);
+  };
+  if('oncancel' in inp)inp.oncancel=rm;
+  inp.click();
+}
+
+/* ═══════════ PREVIEW / COPY / CLEAR ═══════════ */
+
+function togglePrev(){
+  showingPrev=!showingPrev;
+  if(showingPrev){
+    $('out').style.display='none';$('prev').style.display='';
+    $('tabB').textContent='📜 Logs';
+    var sz=lastCode?codeSize(lastCode):0;
+    if(lastCode&&sz<2000000){
+      try{$('frame').srcdoc=lastCode}catch(e){log('⚠️ preview ვერ ჩაიტვირთა.')}
+    }else if(lastCode){
+      log('⚠️ კოდი ძალიან დიდია preview-სთვის ('+fmtSize(sz)+').');
+    }
+  }else{
+    $('prev').style.display='none';$('out').style.display='';
+    $('tabB').textContent='👁️ Preview';
+  }
+}
+
+function doCopy(text,cb){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+    .then(function(){cb(true)})
+    .catch(function(){fallbackCopy(text,cb)});
+  }else{
+    fallbackCopy(text,cb);
+  }
+}
+
+function fallbackCopy(text,cb){
+  var ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  var ok=false;
+  try{ok=document.execCommand('copy')}catch(e){}
+  document.body.removeChild(ta);
+  cb(ok);
+}
+
+function copyCode(){
+  if(!lastCode){alert('კოდი ჯერ არ არის გენერირებული.');return}
+  doCopy(lastCode,function(ok){
+    var b=$('cpB');
+    b.textContent=ok?'✅ Copied!':'❌ Failed';
+    setTimeout(function(){b.textContent='📋 Copy'},1500);
+  });
+}
+
+function copyFinalBtn(btn){
+  if(!lastCode){alert('კოდი ჯერ არ არის.');return}
+  doCopy(lastCode,function(ok){
+    if(btn){
+      btn.textContent=ok?'✅ დაკოპირებულია!':'❌ ვერ დაკოპირდა';
+      setTimeout(function(){btn.textContent='📋 კოდის კოპირება'},1500);
+    }
+    if(ok)log('📋 კოდი დაკოპირებულია clipboard-ში!');
+  });
+}
+
+function shareCode(){
+  if(!lastCode){alert('კოდი ჯერ არ არის.');return}
+  if(!navigator.share){alert('გაზიარება მიუწვდომელია.');return}
+  var f=null;
+  try{if(typeof File!=='undefined')f=new File([lastCode],C.file,{type:'text/html'})}catch(e){}
+  if(f&&typeof navigator.canShare==='function'){
+    try{
+      if(navigator.canShare({files:[f]})){
+        navigator.share({title:"Agent Pro — Lasha Kvitsiani's Production",text:'App created with Agent Pro!',files:[f]})
+        .then(function(){log('📤 გაზიარებულია!')})
+        .catch(function(e){if(e.name!=='AbortError')alert('❌ გაზიარება ვერ მოხერხდა.')});
+        return;
+      }
+    }catch(e){}
+  }
+  var snippet=lastCode.length>3000?lastCode.slice(0,3000)+'\n...':lastCode;
+  navigator.share({title:"Agent Pro — Lasha Kvitsiani's Production",text:'App created with Agent Pro:\n\n'+snippet})
+  .then(function(){log('📤 გაზიარებულია!')})
+  .catch(function(e){if(e.name!=='AbortError')alert('❌ გაზიარება ვერ მოხერხდა.')});
+}
+
+function clearOut(){
+  $('out').textContent="Agent Pro — Lasha Kvitsiani's Production\nლოგები გასუფთავებულია.\n";
+  $('finalBanner').style.display='none';
+  try{$('frame').srcdoc=''}catch(e){}
+  showingPrev=false;
+  $('prev').style.display='none';
+  $('out').style.display='';
+  lastCode='';
+  DB.set('lc','');
+  DB.set('draft','');
+  $('idea').value='';
+  $('tabB').style.display='none';
+  $('dlB').style.display='none';
+  $('cpB').style.display='none';
+  $('size').textContent='';
+  status('მზადაა');
+}
+
+function updSize(){
+  $('size').textContent=lastCode?fmtSize(codeSize(lastCode)):'';
+}
+
+/* ═══════════ CONTROLS ═══════════ */
+
+function doPause(){
+  paused=true;
+  $('pauseB').style.display='none';$('resumeB').style.display='';
+  status('Paused ⏸️');
+}
+
+function doResume(){
+  paused=false;
+  $('resumeB').style.display='none';$('pauseB').style.display='';
+  status('Resumed ▶️');
+}
+
+function doStop(){
+  stopped=true;paused=false;
+  if(currentAbortCtrl){
+    try{currentAbortCtrl.abort()}catch(e){}
+  }
+  if(tmr!==null&&tmr!==undefined){clearInterval(tmr);tmr=null}
+  $('pauseB').style.display='none';$('resumeB').style.display='none';
+  status('Stopped ⏹️');
+  log('\n[ინფო] პროცესი შეჩერებულია.');
+}
+
+function status(t){$('status').textContent='Status: '+t}
+
+function startTmr(){
+  secs=0;showTmr();
+  if(tmr!==null&&tmr!==undefined){clearInterval(tmr);tmr=null}
+  tmr=setInterval(function(){if(!paused&&!stopped){secs++;showTmr()}},1000);
+}
+
+function showTmr(){
+  var m=String(Math.floor(secs/60));
+  var s=String(secs%60);
+  if(m.length<2)m='0'+m;
+  if(s.length<2)s='0'+s;
+  $('timer').textContent='⏱️ '+m+':'+s;
+}
+
+/* ═══════════ CODE EXTRACTION ═══════════ */
+
+function extractCode(raw){
+  if(!raw)return'';
+  var t=String(raw).trim();
+  var m;
+
+  var reA=/(`{4,})[ \t]*(?:html|htm)?\s*[\r\n]+([\s\S]*?)[\r\n]+\s*\1/i;
+  m=reA.exec(t);
+  if(m&&m[2]&&m[2].trim().length>30){
+    return m[2].trim();
+  }
+
+  var reB=/(`{3})[ \t]*(?:html|htm)?\s*[\r\n]+([\s\S]*?)[\r\n]+\s*\1/i;
+  m=reB.exec(t);
+  if(m&&m[2]&&m[2].trim().length>30){
+    return m[2].trim();
+  }
+
+  var unclosed = t.match(/`{3,}[ \t]*(?:html|htm)?\s*[\r\n]+([\s\S]+)$/i);
+  if(unclosed&&unclosed[1]&&unclosed[1].trim().length>30){
+    return unclosed[1].trim();
+  }
+
+  var docMatch = t.match(/<!DOCTYPE\s+html[\s\S]*?<\/html>/i) || t.match(/<html[\s\S]*?<\/html>/i);
+  if(docMatch && docMatch[0] && docMatch[0].length>30){
+    return docMatch[0].trim();
+  }
+
+  var docStart = t.search(/<!DOCTYPE\s+html|<html[\s>]/i);
+  if(docStart!==-1){
+    var partial = t.slice(docStart);
+    if(partial.length>30) return partial.trim();
+  }
+
+  return t;
+}
+
+/* ═══════════ AI CALL ═══════════ */
+
+function callAI(prompt,retries,delay){
+  retries=retries||3;delay=delay||2500;
+  var prov = detectProvider(C.key, C.model, C.url);
+  var effUrl = C.url || (prov && !prov.requiresUrl ? prov.url : '');
+  var effModel = C.model || (prov ? prov.model : '');
+  if(!effUrl){openSet();return Promise.reject(new Error('API Endpoint URL არ არის მითითებული და პროვაიდერის ამოცნობა ვერ მოხერხდა.'))}
+  if(!effModel){openSet();return Promise.reject(new Error('Model Identifier არ არის მითითებული.'))}
+  
+  var attempt=function(a){
+    if(stopped) return Promise.reject(new Error('Stopped'));
+    
+    currentAbortCtrl = HAS_AC ? new AbortController() : null;
+    var req=buildEndpoint(C.url, C.model, C.key, prompt);
+
+    var fetchOpts={method:'POST',headers:req.headers,body:JSON.stringify(req.body)};
+    if(currentAbortCtrl) fetchOpts.signal=currentAbortCtrl.signal;
+
+    var isTimedOut = false;
+    var toId = setTimeout(function(){
+      isTimedOut = true;
+      if(currentAbortCtrl) try{currentAbortCtrl.abort()}catch(ex){}
+    }, 120000);
+
+    return fetch(req.endpoint, fetchOpts)
+    .then(function(r){
+      clearTimeout(toId);
+      if(stopped) throw new Error('Stopped');
+      if((r.status===429 || (r.status>=500 && r.status<600)) && a<retries){
+        var wait=delay*Math.pow(1.5,a-1)+Math.random()*800;
+        return sleep(wait).then(function(){return attempt(a+1)});
+      }
+
+      return r.text().then(function(rawText){
+        var j=null;
+        try{j=JSON.parse(rawText)}catch(e){}
+        if(!r.ok){
+          var errMsg='API Error '+r.status;
+          if(j&&j.error){
+            if(typeof j.error==='string')errMsg=j.error;
+            else if(j.error.message)errMsg=j.error.message;
+          }else if(rawText){
+            errMsg=rawText.slice(0,200);
+          }
+          throw new Error(errMsg);
+        }
+        return j;
+      });
+    })
+    .then(function(d){
+      var txt='';
+      if(d){
+        if(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]){
+          txt=d.candidates[0].content.parts[0].text;
+        }else if(d.choices&&d.choices[0]&&d.choices[0].message){
+          txt=d.choices[0].message.content;
+        }else if(d.text){
+          txt=d.text;
+        }
+      }
+      if(txt&&txt.trim())return txt;
+      throw new Error('API-მ დააბრუნა ცარიელი ტექსტური პასუხი.');
+    })
+    .catch(function(e){
+      clearTimeout(toId);
+      if(stopped) throw e;
+      if(isTimedOut) throw new Error('API მოთხოვნის დრო ამოიწურა (Timeout: 120 წამი).');
+      if(e.name==='AbortError') throw new Error('მოთხოვნა გაუქმდა.');
+      if(a>=retries) throw e;
+      return sleep(delay*a+Math.random()*600).then(function(){return attempt(a+1)});
+    });
+  };
+  return attempt(1);
+}
+
+function waitResume(){
+  return new Promise(function(res){
+    var iv=setInterval(function(){
+      if(!paused||stopped){clearInterval(iv);res()}
+    },250);
+  });
+}
+
+/* ═══════════ SANDBOX ═══════════ */
+
+function sandboxTest(html){
+  return new Promise(function(resolve){
+    var ifr=document.createElement('iframe');
+    ifr.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin');
+    ifr.style.cssText='position:fixed;left:-9999px;top:-9999px;width:100px;height:100px;border:0;opacity:0';
+    document.body.appendChild(ifr);
+    var err=null,done=false,loadGraceTimer=null;
+    var finish=function(ok,msg){
+      if(done)return;done=true;
+      clearTimeout(t1);
+      if(loadGraceTimer)clearTimeout(loadGraceTimer);
+      window.removeEventListener('message',handler);
+      if(ifr.parentNode)ifr.parentNode.removeChild(ifr);
+      resolve({ok:ok,msg:msg});
+    };
+    var handler=function(e){
+      if(e.source===ifr.contentWindow&&e.data&&e.data.type==='sb_err'){
+        err=e.data.msg;
+        finish(false,err);
+      }
+    };
+    window.addEventListener('message',handler);
+    var t1=setTimeout(function(){
+      if(err)finish(false,err);
+      else finish(true,null);
+    },2500);
+
+    ifr.onload=function(){
+      loadGraceTimer=setTimeout(function(){
+        if(err)finish(false,err);
+        else finish(true,null);
+      },350);
+    };
+
+    var inj='<scr'+'ipt>'+
+      'window.onerror=function(m,u,l){'+
+      'var t=typeof m==="object"&&m?m.message||String(m):String(m);'+
+      'try{parent.postMessage({type:"sb_err",msg:t+" (ხაზი "+(l||"?")+")"},"*");}catch(e){}'+
+      '};'+
+      'window.addEventListener("unhandledrejection",function(e){'+
+      'var r=e.reason&&e.reason.message?e.reason.message:String(e.reason);'+
+      'try{parent.postMessage({type:"sb_err",msg:"Promise: "+r},"*");}catch(ex){}'+
+      '});'+
+      '</scr'+'ipt>';
+    try{
+      var s=String(html||'');
+      var finalHtml='';
+      if(/<head[^>]*>/i.test(s)){
+        finalHtml=s.replace(/(<head[^>]*>)/i,'$1'+inj);
+      }else if(/<body[^>]*>/i.test(s)){
+        finalHtml=s.replace(/(<body[^>]*>)/i,'$1'+inj);
+      }else{
+        finalHtml=inj+s;
+      }
+      ifr.srcdoc=finalHtml;
+    }catch(e){finish(false,e.message);return}
+  });
+}
+
+/* ═══════════ LOGGING ═══════════ */
+
+function log(text){
+  var o=$('out');
+  if(!o)return;
+  var t=text.length>10000?text.slice(0,10000)+'...':text;
+  if(HAS_IAT){
+    o.insertAdjacentText('beforeend',t+'\n');
+  }else{
+    o.appendChild(document.createTextNode(t+'\n'));
+  }
+  setTimeout(function(){try{o.scrollTop=o.scrollHeight}catch(e){}},0);
+}
+
+/* ═══════════ MAIN LOOP (UNLIMITED CYCLES SUPPORT) ═══════════ */
+
+function startLoop(){
+  var idea=$('idea').value.trim();
+  if(!idea){alert('გთხოვთ აღწეროთ აპლიკაციის იდეა!');return}
+  var prov = detectProvider(C.key, C.model, C.url);
+  var effUrl = C.url || (prov && !prov.requiresUrl ? prov.url : '');
+  var effModel = C.model || (prov ? prov.model : '');
+  if(!effUrl){
+    alert('მიუთითეთ API Endpoint URL ან შეიყვანეთ მხარდაჭერილი AI-ის API Key (მაგ. Gemini-სთვის URL ავტომატურია და არ მოითხოვება)!');
+    openSet();
+    return;
+  }
+  if(!effModel){
+    alert('მიუთითეთ Model Identifier პარამეტრებში!');
+    openSet();
+    return;
+  }
+  if(running)return;
+  running=true;
+  DB.set('draft','');
+  if(showingPrev)togglePrev();
+  $('finalBanner').style.display='none';
+  var goB=$('goB');goB.disabled=true;
+  $('pauseB').style.display='';$('stopB').style.display='';$('resumeB').style.display='none';
+  $('prog').style.display='';
+  
+  var isUnlimited = C.cycles === 0;
+  var targetCycles = isUnlimited ? 0 : (C.cycles || 5);
+  var cycleLabel = isUnlimited ? 'შეუზღუდავი (∞)' : targetCycles;
+  var provInfo = prov ? " | პროვაიდერი: " + prov.name + (prov.requiresUrl ? "" : " (ავტომატური URL)") : "";
+  $('out').textContent="[Agent Pro — Lasha Kvitsiani's Production]\nიდეა: "+idea+"\nციკლები: "+cycleLabel+provInfo+"\nმოდელი: "+effModel+"\n────────────────────────────────────────\n";
+  var code='',feedback='',cycle=0,finished=false;
+  stopped=false;paused=false;
+  startTmr();
+
+  function finish(){
+    try{
+      if(!finished&&code)log('\n[ინფო] ციკლები დასრულდა. კოდი მზადაა Preview-სა და ჩამოტვირთვაში.');
+      if(!code&&!stopped)log('\n[ინფო] კოდი ვერ გენერირდა. გადაამოწმეთ API პარამეტრები.');
+    }catch(e){}
+    if(tmr!==null&&tmr!==undefined){clearInterval(tmr);tmr=null}
+    running=false;
+    goB.disabled=false;
+    $('pauseB').style.display='none';$('resumeB').style.display='none';$('stopB').style.display='none';
+  }
+
+  function loop(){
+    // UNLIMITED CYCLES: loop respects C.cycles exactly, without any hardcoded 20-cycle cap
+    if((!isUnlimited && cycle>=targetCycles)||finished||stopped)return Promise.resolve();
+    if(paused)return waitResume().then(loop);
+    if(stopped)return Promise.resolve();
+    cycle++;
+    if(!isUnlimited && targetCycles > 0){
+      $('bar').style.width=((cycle/targetCycles)*100)+'%';
+    }else{
+      $('bar').style.width='100%';
+    }
+    status('კოდის გენერირება ('+cycle+(isUnlimited ? '' : '/'+targetCycles)+')…');
+    var fb=feedback
+      ?'CRITICAL — fix these issues from previous audit:\n"'+feedback+'"'
+      :'First version — produce the best possible single-file implementation.';
+    var prevCode=code?truncate(code,6000):'';
+    var prompt="You are an expert single-file web developer (Agent Pro — Lasha Kvitsiani's Production).\n"+
+      'Write a complete, high-quality, self-contained HTML file with ALL CSS in <style> and ALL JS in <script>.\n'+
+      'Requirements:\n'+
+      '- User idea: "'+idea+'"\n'+
+      '- '+fb+'\n'+
+      '- Additional rules: "'+(C.rules||'none')+'"\n';
+    if(prevCode){
+      prompt+='- Previous version to improve:\n```html\n'+prevCode+'\n```\n';
+    }
+    prompt+='Output ONLY the complete HTML file, wrapped in ````html ... ```` (four backticks). No conversational preamble or postscript.';
+
+    return callAI(prompt)
+    .then(function(raw){
+      if(stopped)return Promise.resolve();
+      code=extractCode(raw);
+      if(!code||code.length<40){
+        feedback='AI returned incomplete or empty code. Regenerate complete HTML.';
+        log('[Cycle '+cycle+'] ⚠️ ცარიელი/არასრული კოდი — თავიდან ცდა…');
+        return loop();
+      }
+      log('[Cycle '+cycle+'] ✓ კოდი გენერირებულია ('+fmtSize(codeSize(code))+')');
+      if(stopped)return Promise.resolve();
+      if(paused)return waitResume().then(sandbox);
+      return sandbox();
+    });
+  }
+
+  function sandbox(){
+    if(stopped)return Promise.resolve();
+    status('Sandbox ტესტირება…');
+    return sandboxTest(code)
+    .then(function(sb){
+      if(stopped)return Promise.resolve();
+      var sbMsg=sb.ok?'':'Runtime Error: '+(sb.msg||'unknown');
+      status('კოდის აუდიტი…');
+      var auditPrompt="You are a strict code auditor for Agent Pro.\n"+
+        "Evaluate this single-file HTML app:\n"+
+        "1. Valid HTML structure (DOCTYPE, html, head, body)\n"+
+        "2. No runtime JS errors (sandbox reported: \""+(sbMsg||'none')+"\")\n"+
+        "3. All CSS/JS is inline (no broken external refs unless CDN)\n"+
+        "4. The app actually implements: \""+idea+"\"\n\n"+
+        "Output your verdict on the very first line:\n"+
+        "VERDICT: OK (if fully functional, complete, styled, and working)\n"+
+        "OR\n"+
+        "VERDICT: NEEDS_FIXES (followed by specific concise bullet points of what to fix)\n\n"+
+        "Code:\n"+truncate(code,8000);
+      return callAI(auditPrompt).then(function(audit){
+        if(stopped)return Promise.resolve();
+        var aTxt=(audit||'').trim();
+        var verdictMatch = aTxt.match(/VERDICT:\s*(OK|APPROVED|PASSED|NEEDS_FIXES|FIX|FAIL)/i);
+        var isApproved = false;
+        if(verdictMatch){
+          var v = verdictMatch[1].toUpperCase();
+          if(v === 'OK' || v === 'APPROVED' || v === 'PASSED') isApproved = true;
+        } else {
+          var hasPureOk = /^(OK|PASSED|APPROVED)[.!]?$/i.test(aTxt);
+          var hasOk = /\bOK\b/i.test(aTxt);
+          var hasFail = /\b(NOT\s+OK|FAIL|FAILED|ERROR|BUG|FIX|ISSUE|SYNTAX|MISSING|INCOMPLETE|BROKEN|PROBLEM)\b/i.test(aTxt);
+          isApproved = hasPureOk || (hasOk && !hasFail);
+        }
+
+        if(isApproved && sb.ok){
+          finished=true;
+          status('✅ აპი მზადაა! 🎉');
+          log('[Audit] ✅ სრულყოფილია — წარმატებით დასრულდა '+cycle+' ციკლში.');
+          log('🎯 საბოლოო კოდი მზადაა — შეგიძლიათ გადახედოთ ან ჩამოტვირთოთ.');
+          $('finalBanner').style.display='block';
+          dl(C.file,code);
+        }else{
+          feedback=audit||'Unknown audit failure.';
+          log('[Audit] 🔧 გასასწორებელია:\n'+feedback);
+        }
+        lastCode=code;
+        DB.set('lc',code);
+        $('tabB').style.display='';$('dlB').style.display='';$('cpB').style.display='';
+        updSize();
+        if(finished){finish();return Promise.resolve()}
+        return loop();
+      });
+    });
+  }
+
+  loop().then(finish).catch(function(e){
+    if(stopped)return;
+    var msg=errMsg(e);
+    status('❌ '+msg);
+    log('\n[შეცდომა] '+msg);
+    if(msg.indexOf('Endpoint')!==-1||msg.indexOf('Model')!==-1||msg.indexOf('API')!==-1){
+      openSet();
+    }
+    finish();
+  });
+}
+
+/* ═══════════ DOWNLOAD ═══════════ */
+
+function dlLast(){if(lastCode)dl(C.file,lastCode)}
+
+function dl(name,content){
+  try{
+    var a=document.createElement('a');
+    var u=URL.createObjectURL(new Blob([content],{type:'text/html;charset=utf-8'}));
+    a.href=u;a.download=name;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(u)},5000);
+  }catch(e){alert('❌ ჩამოტვირთვა ვერ მოხერხდა: '+errMsg(e))}
+}
+
+/* ═══════════ EVENT DELEGATION ═══════════ */
+
+function findAct(el){
+  while(el&&el.nodeType===1){
+    var a=null;
+    if(el.getAttribute)a=el.getAttribute('data-act');
+    if(a)return{el:el,act:a};
+    el=el.parentNode;
+  }
+  return null;
+}
+
+document.addEventListener('click',function(e){
+  var t=e.target||null;
+  if(!t)return;
+  var f=findAct(t);
+  if(!f)return;
+  var act=f.act,el=f.el;
+  if(act==='install')installApp();
+  else if(act==='dl')dlLast();
+  else if(act==='copy')copyCode();
+  else if(act==='prev')togglePrev();
+  else if(act==='clear')clearOut();
+  else if(act==='settings')openSet();
+  else if(act==='close-settings')closeSet();
+  else if(act==='test-api')testApiBtn(el);
+  else if(act==='save')saveSet();
+  else if(act==='toggle-unlimited')toggleUnlimited();
+  else if(act==='export')exportSettings();
+  else if(act==='import')importSettings();
+  else if(act==='copy-final')copyFinalBtn(el);
+  else if(act==='share')shareCode();
+  else if(act==='pause')doPause();
+  else if(act==='resume')doResume();
+  else if(act==='stop')doStop();
+  else if(act==='start')startLoop();
+  else if(act==='close-ios')closeIosGuide();
+  else if(act==='toggle-lang')toggleLang();
+},false);
+
+/* ═══════════ KEYBOARD ═══════════ */
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    closeSet();
+    if($('iosGuide').style.display==='block')closeIosGuide();
+    return;
+  }
+  if(e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey&&document.activeElement===$('idea')&&!running){
+    e.preventDefault();startLoop();
+  }
+});
+
+/* ═══════════ TEXTAREA ═══════════ */
+
+$('idea').addEventListener('input',function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,140)+'px';
+  DB.set('draft',this.value);
+});
+
+/* ═══════════ I18N / LANGUAGE ═══════════ */
+
+var curLang = DB.get('lang', 'ka') || 'ka';
+var I18N = {
+  ka: {
+    btn: '🇬🇪 KA',
+    ready: 'მზადაა მუშაობისთვის',
+    placeholder: 'აღწერეთ აპლიკაციის იდეა… (Enter — Start, Shift+Enter — ახალი ხაზი)'
+  },
+  en: {
+    btn: '🇺🇸 EN',
+    ready: 'Ready to work',
+    placeholder: 'Describe your app idea… (Enter — Start, Shift+Enter — new line)'
+  }
+};
+
+function applyLang(){
+  var dict = I18N[curLang] || I18N.ka;
+  var b = $('langB');
+  if(b) b.textContent = dict.btn;
+  var id = $('idea');
+  if(id) id.placeholder = dict.placeholder;
+  if(!running) status(dict.ready);
+}
+
+function toggleLang(){
+  curLang = (curLang === 'ka') ? 'en' : 'ka';
+  DB.set('lang', curLang);
+  applyLang();
+}
+
+/* ═══════════ INIT ═══════════ */
+
+setupPWA();
+applyLang();
+log("Agent Pro — Lasha Kvitsiani's Production წარმატებით ჩაიტვირთა.");
+status('მზადაა');
+
+window.addEventListener('unhandledrejection',function(e){
+  var msg=e.reason&&e.reason.message?e.reason.message:String(e.reason);
+  console.error('[Watchdog] Unhandled promise: '+msg);
+});
+</script>
+</body>
+</html>
